@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Presentation Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #6e8efb;
+            margin-bottom: 20px;
+            font-size: 2em;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            color: #555;
+        }
+        textarea, select, input[type="file"] {
+            width: calc(100% - 20px);
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+            display: block;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ff6f61, #d83a56);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.2s;
+            display: block;
+            margin: 20px auto 0;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #d83a56, #ff6f61);
+            transform: scale(1.05);
+        }
+        .slides {
+            margin-top: 20px;
+        }
+        .slide {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffffff, #f1f1f1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .slide h2 {
+            margin: 0;
+            color: #6e8efb;
+        }
+        .slide p {
+            margin: 10px 0;
+            color: #555;
+        }
+        .editor-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            width: 300px;
+            max-width: 100%;
+            height: auto;
+            overflow-y: auto;
+        }
+        .editor-container label {
+            margin: 0 0 10px;
+            font-weight: normal;
+        }
+        .editor-container input[type="color"], .editor-container select, .editor-container input[type="file"] {
+            margin-bottom: 10px;
+        }
+        .editor-container img {
+            max-width: 100px;
+            height: auto;
+            position: absolute;
+            cursor: move;
+        }
+        .scale-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .scale-controls input {
+            width: 100%;
+            margin-right: 10px;
+        }
+        .close-editor {
+            cursor: pointer;
+            color: #ff6f61;
+            font-weight: bold;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .pdf-preview {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .pdf-preview iframe {
+            width: 90%;
+            height: 90%;
+            border: none;
+        }
+        .pdf-preview .close-preview {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .download-buttons button {
+            background: linear-gradient(135deg, #4CAF50, #3e8e41);
+        }
+        .download-buttons button:disabled {
+            background: linear-gradient(135deg, #a9a9a9, #d3d3d3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Presentation Generator</h1>
+    
+    <label for="pdfUpload">Загрузить шаблон PDF:</label>
+    <input type="file" id="pdfUpload" accept=".pdf" onchange="previewPDF(event)">
+
+    <label for="useCustomText">Использовать готовый текст:</label>
+    <textarea id="customText" placeholder="Введите готовый текст для презентации..."></textarea>
+
+    <label for="slideCount">Выберите количество слайдов:</label>
+    <select id="slideCount">
+        <option value="5">5 слайдов</option>
+        <option value="10">10 слайдов</option>
+        <option value="15">15 слайдов</option>
+    </select>
+
+    <label for="inputText">Введите тему или идеи для презентации:</label>
+    <textarea id="inputText" placeholder="Введите тему или идеи для презентации..."></textarea>
+
+    <label for="templateSelect">Выберите шаблон презентации:</label>
+    <select id="templateSelect">
+        <option value="default">Стандартный</option>
+        <option value="business">Бизнес</option>
+        <option value="creative">Креативный</option>
+    </select>
+
+    <button onclick="generatePresentation()">Сгенерировать презентацию</button>
+
+    <div id="slides" class="slides"></div>
+
+    <!-- Download Buttons -->
+    <div class="download-buttons">
+        <button id="downloadPDF" onclick="downloadPDF()">Скачать PDF</button>
+        <button id="downloadFIG" disabled>FIG (в разработке)</button>
+        <button id="downloadPPTX" disabled>PPTX (в разработке)</button>
+    </div>
+</div>
+
+<!-- PDF Preview Container -->
+<div id="pdfPreview" class="pdf-preview">
+    <div class="close-preview" onclick="closePDFPreview()">×</div>
+    <iframe id="pdfFrame"></iframe>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.11.0/pptxgen.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+async function generatePresentation() {
+    const inputText = document.getElementById('inputText').value;
+    const customText = document.getElementById('customText').value;
+    const slideCount = document.getElementById('slideCount').value;
+    const useCustomText = customText.trim() !== '';
+
+    let textToUse = useCustomText ? customText : inputText;
+
+    if (!useCustomText) {
+        // Запрос к LM Studio API для генерации текста
+        const response = await fetch('http://127.0.0.1:4854/v1/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'lmstudio-community/Meta-Llama-3.1-8B-Instruct-Q8_0',
+                prompt: inputText,
+                max_tokens: 1000
+            })
+        });
+        const data = await response.json();
+        textToUse = data.choices[0].text;
+    }
+
+    const slides = splitTextIntoSlides(textToUse, slideCount);
+    const slidesContainer = document.getElementById('slides');
+    slidesContainer.innerHTML = '';
+
+    slides.forEach((slideContent, index) => {
+        const slideDiv = document.createElement('div');
+        slideDiv.className = 'slide';
+
+        const slideTitle = document.createElement('h2');
+        slideTitle.innerText = `Слайд ${index + 1}`;
+        slideDiv.appendChild(slideTitle);
+
+        const slideText = document.createElement('p');
+        slideText.innerText = slideContent;
+        slideDiv.appendChild(slideText);
+
+        const editButton = document.createElement('button');
+        editButton.innerText = 'Редактировать';
+        editButton.addEventListener('click', () => showEditor(slideDiv, slideText));
+        slideDiv.appendChild(editButton);
+
+        slidesContainer.appendChild(slideDiv);
+    });
+
+    // Автоматический переход на вторую страницу
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+function splitTextIntoSlides(text, slideCount) {
+    const sentences = text.split(/(?<=[.!?])\s+/); // Разделение на предложения
+    const slides = [];
+    let currentSlide = '';
+    
+    sentences.forEach(sentence => {
+        const words = sentence.split(/\s+/);
+        const wordsCount = words.length;
+        
+        if (currentSlide.split(/\s+/).length + wordsCount > 50) {
+            if (currentSlide.trim()) {
+                slides.push(currentSlide.trim());
+            }
+            currentSlide = '';
+        }
+        
+        if (wordsCount <= 50) {
+            currentSlide += sentence + ' ';
+        } else {
+            // Разделить длинное предложение на несколько частей, если оно превышает 50 слов
+            for (let i = 0; i < words.length; i += 50) {
+                slides.push(words.slice(i, i + 50).join(' '));
+            }
+            currentSlide = '';
+        }
+    });
+
+    if (currentSlide.trim()) {
+        slides.push(currentSlide.trim());
+    }
+
+    // Убедитесь, что количество слайдов не превышает выбранное
+    if (slides.length > slideCount) {
+        slides.length = slideCount;
+    } else if (slides.length < slideCount) {
+        const lastSlide = slides[slides.length - 1] || '';
+        while (slides.length < slideCount) {
+            slides.push(lastSlide);
+        }
+    }
+
+    return slides;
+}
+
+function showEditor(slideDiv, slideText) {
+    let editorDiv = slideDiv.querySelector('.editor-container');
+    if (!editorDiv) {
+        editorDiv = document.createElement('div');
+        editorDiv.className = 'editor-container';
+        slideDiv.appendChild(editorDiv);
+
+        // Close button
+        const closeButton = document.createElement('div');
+        closeButton.className = 'close-editor';
+        closeButton.innerText = 'Закрыть';
+        closeButton.addEventListener('click', () => {
+            editorDiv.style.display = 'none';
+        });
+        editorDiv.appendChild(closeButton);
+
+        // Color picker
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.addEventListener('input', (e) => {
+            slideText.style.color = e.target.value;
+        });
+        editorDiv.appendChild(colorInput);
+
+        // Font size picker
+        const fontSizeSelect = document.createElement('select');
+        [10, 12, 14, 16, 18, 20, 22, 24].forEach(size => {
+            const option = document.createElement('option');
+            option.value = size;
+            option.textContent = `${size}px`;
+            fontSizeSelect.appendChild(option);
+        });
+        fontSizeSelect.addEventListener('change', (e) => {
+            slideText.style.fontSize = e.target.value + 'px';
+        });
+        editorDiv.appendChild(fontSizeSelect);
+
+        // Font family picker
+        const fontFamilySelect = document.createElement('select');
+        ['Arial', 'Verdana', 'Times New Roman', 'Georgia', 'Courier New'].forEach(font => {
+            const option = document.createElement('option');
+            option.value = font;
+            option.textContent = font;
+            fontFamilySelect.appendChild(option);
+        });
+        fontFamilySelect.addEventListener('change', (e) => {
+            slideText.style.fontFamily = e.target.value;
+        });
+        editorDiv.appendChild(fontFamilySelect);
+
+        // File input for image
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '100px';
+                    img.style.maxHeight = '100px';
+                    img.style.position = 'absolute';
+                    img.style.left = '10px';
+                    img.style.top = '10px';
+                    img.style.cursor = 'move';
+
+                    // Масштабирование изображения
+                    const scaleInput = document.createElement('input');
+                    scaleInput.type = 'range';
+                    scaleInput.min = 0.1;
+                    scaleInput.max = 2;
+                    scaleInput.step = 0.1;
+                    scaleInput.value = 1;
+                    scaleInput.style.width = '100%';
+                    scaleInput.addEventListener('input', (e) => {
+                        img.style.transform = `scale(${e.target.value})`;
+                    });
+
+                    const scaleDiv = document.createElement('div');
+                    scaleDiv.className = 'scale-controls';
+                    scaleDiv.appendChild(scaleInput);
+                    editorDiv.appendChild(scaleDiv);
+
+                    slideDiv.appendChild(img);
+
+                    // Перемещение изображения
+                    dragImage(img, slideDiv);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        editorDiv.appendChild(fileInput);
+    }
+
+    editorDiv.style.display = 'block';
+}
+
+function dragImage(img, slideDiv) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    img.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragImage;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        img.style.top = (img.offsetTop - pos2) + "px";
+        img.style.left = (img.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragImage() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
+function previewPDF(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const fileURL = URL.createObjectURL(file);
+        const pdfFrame = document.getElementById('pdfFrame');
+        pdfFrame.src = fileURL;
+        document.getElementById('pdfPreview').style.display = 'flex';
+    }
+}
+
+function closePDFPreview() {
+    document.getElementById('pdfPreview').style.display = 'none';
+}
+
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach((slide, index) => {
+        if (index > 0) doc.addPage();
+        doc.text(slide.querySelector('h2').innerText, 10, 10);
+        doc.text(slide.querySelector('p').innerText, 10, 20);
+    });
+    doc.save('presentation.pdf');
+}
+</script>
+
+</body>
+</html>
